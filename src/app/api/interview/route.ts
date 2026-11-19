@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
 
     let parsed;
     try {
-      parsed = JSON.parse(text);
+      // Strip markdown code fences if present
+      const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+      parsed = JSON.parse(cleaned);
     } catch {
       parsed = {
         question: text,

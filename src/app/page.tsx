@@ -10,21 +10,23 @@ export default function Home() {
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-24">
         <div className="max-w-xl text-center">
           <h1 className="font-serif text-4xl sm:text-5xl leading-tight tracking-tight">
-            Discover your
+            Discover what
             <br />
-            <span className="text-accent">North Star</span>
+            <span className="text-accent">makes you, you</span>
           </h1>
           <p className="mt-6 text-lg text-muted leading-relaxed max-w-md mx-auto">
-            A thoughtful 15-minute conversation that helps you find your
-            purpose, strengths, and direction — grounded in your own story.
+            A meaningful 15-minute conversation that uncovers your purpose,
+            patterns, and direction — grounded in your own stories.
           </p>
           <Link
             href="/interview"
             className="mt-10 inline-flex items-center justify-center rounded-full bg-foreground text-background px-8 py-3.5 text-base font-medium transition-opacity hover:opacity-85"
           >
-            Find your Why
+            Discover My Why
           </Link>
-          <p className="mt-4 text-sm text-muted">Free. Private. No sign-up needed.</p>
+          <p className="mt-4 text-sm text-muted">
+            Free. Private. Answer by voice or typing.
+          </p>
         </div>
 
         <div className="mt-24 max-w-2xl w-full">
@@ -33,24 +35,24 @@ export default function Home() {
               <div className="text-2xl mb-3">1</div>
               <h3 className="font-serif text-lg mb-1">Share your story</h3>
               <p className="text-sm text-muted leading-relaxed">
-                Answer questions about moments that shaped you — no right or
-                wrong answers.
+                Answer questions about moments that shaped you — by voice or
+                typing. No right or wrong answers.
               </p>
             </div>
             <div>
               <div className="text-2xl mb-3">2</div>
               <h3 className="font-serif text-lg mb-1">We listen deeply</h3>
               <p className="text-sm text-muted leading-relaxed">
-                AI maps your personality, strengths, values, and motivations
-                across proven frameworks.
+                AI finds meaningful patterns in your experiences — recurring
+                themes, hidden motivations, and personal strengths.
               </p>
             </div>
             <div>
               <div className="text-2xl mb-3">3</div>
               <h3 className="font-serif text-lg mb-1">Meet your Why</h3>
               <p className="text-sm text-muted leading-relaxed">
-                Get your North Star, Ikigai map, personality profile, and a
-                30-day action plan.
+                Get your North Star, your Hidden Thread, and a memorable
+                archetype — all backed by your own words.
               </p>
             </div>
           </div>
@@ -58,7 +60,7 @@ export default function Home() {
       </main>
 
       <footer className="text-center py-8 text-xs text-muted">
-        Your answers stay private and are never shared.
+        Your stories stay private. Nothing is shared without your permission.
       </footer>
     </div>
   );

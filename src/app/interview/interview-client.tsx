@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createEmptyProfile, Profile, getOverallConfidence } from "@/lib/interview/profile";
 import { ConversationMessage, getOpeningQuestion } from "@/lib/interview/engine";
+import { useVoiceRecorder, RecorderState } from "@/lib/voice/use-voice-recorder";
 
 function TypingIndicator() {
   return (
@@ -30,6 +31,100 @@ function ProgressBar({ confidence }: { confidence: number }) {
   );
 }
 
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function MicButton({
+  recorderState,
+  elapsedSeconds,
+  onStart,
+  onStop,
+  onCancel,
+  disabled,
+}: {
+  recorderState: RecorderState;
+  elapsedSeconds: number;
+  onStart: () => void;
+  onStop: () => void;
+  onCancel: () => void;
+  disabled: boolean;
+}) {
+  if (recorderState === "recording") {
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full p-2.5 text-muted hover:text-foreground transition-colors"
+          aria-label="Cancel recording"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <span className="text-xs text-muted tabular-nums min-w-[3ch]">
+          {formatTime(elapsedSeconds)}
+        </span>
+        <button
+          type="button"
+          onClick={onStop}
+          className="relative rounded-full bg-red-500 text-white p-3.5 transition-opacity hover:opacity-90"
+          aria-label="Stop recording"
+        >
+          <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-30" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+  if (recorderState === "transcribing") {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+          <path d="M12 2a10 10 0 0 1 10 10" />
+        </svg>
+        Transcribing...
+      </div>
+    );
+  }
+
+  if (recorderState === "requesting") {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+          <path d="M12 2a10 10 0 0 1 10 10" />
+        </svg>
+        Requesting mic...
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onStart}
+      disabled={disabled}
+      className="rounded-full bg-foreground text-background p-3.5 transition-opacity hover:opacity-85 disabled:opacity-30"
+      aria-label="Start voice recording"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3" />
+        <path d="M5 10a7 7 0 0 0 14 0" />
+        <line x1="12" y1="19" x2="12" y2="22" />
+      </svg>
+    </button>
+  );
+}
+
 export default function InterviewClient() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [profile, setProfile] = useState<Profile>(createEmptyProfile);
@@ -38,9 +133,17 @@ export default function InterviewClient() {
   const [questionCount, setQuestionCount] = useState(0);
   const startedAtRef = useRef(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleTranscription = useCallback((text: string) => {
+    setInput(text);
+    setVoiceError(null);
+  }, []);
+
+  const recorder = useVoiceRecorder(handleTranscription);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -60,10 +163,16 @@ export default function InterviewClient() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && inputRef.current) {
+    if (!isLoading && recorder.state === "idle" && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isLoading]);
+  }, [isLoading, recorder.state]);
+
+  useEffect(() => {
+    if (recorder.error) {
+      setVoiceError(recorder.error);
+    }
+  }, [recorder.error]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +183,7 @@ export default function InterviewClient() {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
+    setVoiceError(null);
     setIsLoading(true);
 
     try {
@@ -131,6 +241,8 @@ export default function InterviewClient() {
     }
   }
 
+  const isBusy = isLoading || recorder.state === "transcribing" || recorder.state === "requesting";
+
   return (
     <div className="flex flex-col h-dvh bg-background">
       <header className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -170,6 +282,12 @@ export default function InterviewClient() {
 
       <div className="border-t border-border bg-background">
         <div className="max-w-2xl mx-auto px-5 py-4">
+          {voiceError && (
+            <div className="mb-3 text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              {voiceError}
+            </div>
+          )}
+
           {isComplete ? (
             <Link
               href="/results"
@@ -178,24 +296,41 @@ export default function InterviewClient() {
               See your results
             </Link>
           ) : (
-            <form onSubmit={handleSubmit} className="flex gap-3">
+            <form onSubmit={handleSubmit} className="flex items-end gap-3">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Share your thoughts..."
-                disabled={isLoading}
+                placeholder={
+                  recorder.state === "recording"
+                    ? "Recording... tap the stop button when done"
+                    : recorder.state === "transcribing"
+                      ? "Transcribing your answer..."
+                      : "Share your thoughts... or tap the mic"
+                }
+                disabled={isBusy || recorder.state === "recording"}
                 rows={1}
                 className="flex-1 resize-none rounded-2xl border border-border bg-surface px-5 py-3 text-[15px] leading-relaxed placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-accent/30 disabled:opacity-50"
               />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="self-end rounded-full bg-foreground text-background px-5 py-3 text-sm font-medium transition-opacity hover:opacity-85 disabled:opacity-30"
-              >
-                Send
-              </button>
+              {input.trim() ? (
+                <button
+                  type="submit"
+                  disabled={isBusy}
+                  className="self-end rounded-full bg-foreground text-background px-5 py-3 text-sm font-medium transition-opacity hover:opacity-85 disabled:opacity-30"
+                >
+                  Send
+                </button>
+              ) : (
+                <MicButton
+                  recorderState={recorder.state}
+                  elapsedSeconds={recorder.elapsedSeconds}
+                  onStart={recorder.startRecording}
+                  onStop={recorder.stopRecording}
+                  onCancel={recorder.cancelRecording}
+                  disabled={isBusy}
+                />
+              )}
             </form>
           )}
         </div>
