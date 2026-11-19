@@ -70,7 +70,9 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Next.js project scaffolded
 - [x] Git initialized
 - [x] .env.local template with all keys
-- [x] GitHub + Vercel deployment guide
+- [x] GitHub repo: https://github.com/pierrepat/meetyourwhy
+- [x] Vercel project: https://meetyourwhy.vercel.app (auto-deploys on push)
+- [x] GitHub connected to Vercel (every push to main → production deploy)
 
 ### Stage 1: Landing Page & Interview Engine (Typed)
 - [ ] Landing page (hero, how-it-works, CTA)
