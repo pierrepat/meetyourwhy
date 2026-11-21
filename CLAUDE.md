@@ -155,11 +155,11 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Archetype (name, description, evidence, limitations, user approval)
 - [x] Versioned report schema
 
-### Stage 5: Results Reveal (mobile-first)
-- [ ] Screen 1: North Star (edit/confirm)
-- [ ] Screen 2: Hidden Thread (visual story timeline)
-- [ ] Screen 3: Archetype (edit/confirm)
-- [ ] Screen 4: Share step
+### Stage 5: Results Reveal (mobile-first) ✅
+- [x] Screen 1: North Star (edit/confirm)
+- [x] Screen 2: Hidden Thread (visual story timeline)
+- [x] Screen 3: Archetype (edit/confirm)
+- [x] Screen 4: Share step
 
 ### Stage 6: Minimal Sharing Loop (private-first)
 - [ ] Primary share action: "Send this to someone who knows you. Ask them: is this me?" via native share to messaging apps
