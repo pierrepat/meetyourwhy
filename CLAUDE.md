@@ -147,7 +147,7 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Coverage gaps tracking to guide question selection
 - [x] System prompt rewritten to match interviewer-principles conversation arc and listening guidelines
 - [x] Safety protocol in system prompt (under-18 handling, distress detection, session flagging)
-- [ ] Test transcripts and evaluation scripts
+- [x] Test suite (56 unit tests: JSON extraction, profile updates, phase logic, coverage)
 
 ### Stage 4: Discovery Report (launch scope: 3 results)
 - [ ] North Star generation (editable, rejectable, alternatives)
