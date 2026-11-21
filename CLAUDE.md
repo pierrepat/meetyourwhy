@@ -149,11 +149,11 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Safety protocol in system prompt (under-18 handling, distress detection, session flagging)
 - [x] Test suite (56 unit tests: JSON extraction, profile updates, phase logic, coverage)
 
-### Stage 4: Discovery Report (launch scope: 3 results)
-- [ ] North Star generation (editable, rejectable, alternatives)
-- [ ] Hidden Thread (3 stories, quotes, theme, alternative interpretation)
-- [ ] Archetype (name, description, evidence, limitations, user approval)
-- [ ] Versioned report schema
+### Stage 4: Discovery Report (launch scope: 3 results) ✅
+- [x] North Star generation (editable, rejectable, alternatives)
+- [x] Hidden Thread (3 stories, quotes, theme, alternative interpretation)
+- [x] Archetype (name, description, evidence, limitations, user approval)
+- [x] Versioned report schema
 
 ### Stage 5: Results Reveal (mobile-first)
 - [ ] Screen 1: North Star (edit/confirm)

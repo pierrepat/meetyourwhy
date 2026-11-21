@@ -259,6 +259,10 @@ export default function InterviewClient() {
         setQuestionCount((c) => c + 1);
 
         if (data.shouldEnd) {
+          sessionStorage.setItem(
+            "meetyourwhy_profile",
+            JSON.stringify(data.profile)
+          );
           setMessages((prev) => [
             ...prev,
             {
