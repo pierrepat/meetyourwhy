@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-5-5",
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: systemPrompt,
       messages: messages.map((m) => ({
         role: m.role,
@@ -37,33 +37,49 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const textBlock = response.content.find((c) => c.type === "text");
+    const text = textBlock && textBlock.type === "text" ? textBlock.text : "";
 
     let parsed;
     try {
-      // Strip markdown code fences if present
-      const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
-      parsed = JSON.parse(cleaned);
+      // The AI may return: (a) raw JSON, (b) code-fenced JSON, or
+      // (c) plain text followed by a code-fenced JSON block.
+      // Extract the JSON from a code block if present, otherwise try the whole text.
+      const codeBlockMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)\n```/);
+      const jsonText = codeBlockMatch
+        ? codeBlockMatch[1].trim()
+        : text
+            .replace(/^```(?:json)?\s*\n?/i, "")
+            .replace(/\n?```\s*$/i, "")
+            .trim();
+      parsed = JSON.parse(jsonText);
     } catch {
       parsed = {
         question: text,
-        strategy: "fill_gap",
+        strategy: "explore",
         profileUpdates: {},
         shouldEnd: false,
+        isMirrorMoment: false,
       };
     }
 
     const updatedProfile = applyProfileUpdates(
       profile,
-      parsed.profileUpdates || {}
+      parsed.profileUpdates || {},
+      questionCount
     );
 
+    const question =
+      parsed.question && parsed.question.trim()
+        ? parsed.question
+        : "That's really interesting — tell me more about that. What was going through your mind?";
+
     return NextResponse.json({
-      question: parsed.question,
+      question,
       profile: updatedProfile,
       strategy: parsed.strategy,
       shouldEnd: parsed.shouldEnd || false,
+      isMirrorMoment: parsed.isMirrorMoment || false,
     });
   } catch (error) {
     console.error("Interview API error:", error);

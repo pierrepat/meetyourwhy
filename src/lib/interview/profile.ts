@@ -1,103 +1,101 @@
-export interface DimensionState {
-  confidence: number;
-  notes: string;
-  evidence: string[];
+export type ConfidenceLevel =
+  | "insufficient"
+  | "emerging"
+  | "supported"
+  | "confirmed"
+  | "disputed";
+
+export interface Evidence {
+  quote: string;
+  context: string;
+  questionNumber: number;
+}
+
+export interface LifeStory {
+  summary: string;
+  emotions: string[];
+  evidence: Evidence;
+  relatedDrivers: string[];
+}
+
+export interface Insight {
+  label: string;
+  description: string;
+  evidence: Evidence[];
+  confidence: ConfidenceLevel;
+}
+
+export interface Tension {
+  label: string;
+  sideA: string;
+  sideB: string;
+  evidence: Evidence[];
+}
+
+export interface HiddenThread {
+  theme: string;
+  storyIndices: number[];
+  hypothesis: string;
+  alternativeHypothesis: string;
+  confidence: ConfidenceLevel;
+}
+
+export interface MirrorMoment {
+  questionNumber: number;
+  reflection: string;
+  response: "confirmed" | "corrected" | "rejected";
+  correction?: string;
 }
 
 export interface Profile {
-  ikigai: {
-    love: DimensionState;
-    skill: DimensionState;
-    need: DimensionState;
-    paid: DimensionState;
-  };
-  personality16: DimensionState;
-  bigFive: {
-    openness: DimensionState;
-    conscientiousness: DimensionState;
-    extraversion: DimensionState;
-    agreeableness: DimensionState;
-    neuroticism: DimensionState;
-  };
-  enneagram: DimensionState;
-  viaStrengths: DimensionState;
-  schwartzValues: DimensionState;
-  hollandRIASEC: DimensionState;
-  lifeStory: DimensionState;
+  lifeStories: LifeStory[];
+  coreDrivers: Insight[];
+  personalValues: Insight[];
+  demonstratedStrengths: Insight[];
+  internalTensions: Tension[];
+  hiddenThread: HiddenThread | null;
+  mirrorMoments: MirrorMoment[];
 }
-
-const emptyDimension = (): DimensionState => ({
-  confidence: 0,
-  notes: "",
-  evidence: [],
-});
 
 export function createEmptyProfile(): Profile {
   return {
-    ikigai: {
-      love: emptyDimension(),
-      skill: emptyDimension(),
-      need: emptyDimension(),
-      paid: emptyDimension(),
-    },
-    personality16: emptyDimension(),
-    bigFive: {
-      openness: emptyDimension(),
-      conscientiousness: emptyDimension(),
-      extraversion: emptyDimension(),
-      agreeableness: emptyDimension(),
-      neuroticism: emptyDimension(),
-    },
-    enneagram: emptyDimension(),
-    viaStrengths: emptyDimension(),
-    schwartzValues: emptyDimension(),
-    hollandRIASEC: emptyDimension(),
-    lifeStory: emptyDimension(),
+    lifeStories: [],
+    coreDrivers: [],
+    personalValues: [],
+    demonstratedStrengths: [],
+    internalTensions: [],
+    hiddenThread: null,
+    mirrorMoments: [],
   };
 }
 
-export function getOverallConfidence(profile: Profile): number {
-  const dimensions = [
-    profile.ikigai.love,
-    profile.ikigai.skill,
-    profile.ikigai.need,
-    profile.ikigai.paid,
-    profile.personality16,
-    profile.bigFive.openness,
-    profile.bigFive.conscientiousness,
-    profile.bigFive.extraversion,
-    profile.bigFive.agreeableness,
-    profile.bigFive.neuroticism,
-    profile.enneagram,
-    profile.viaStrengths,
-    profile.schwartzValues,
-    profile.hollandRIASEC,
-    profile.lifeStory,
-  ];
-  return dimensions.reduce((sum, d) => sum + d.confidence, 0) / dimensions.length;
+export function getInterviewPhase(questionCount: number): string {
+  if (questionCount <= 4) return "Getting to know you";
+  if (questionCount <= 7) return "Finding patterns";
+  if (questionCount <= 12) return "Going deeper";
+  return "Putting it together";
 }
 
-export function getWeakestDimensions(profile: Profile): string[] {
-  const all: { name: string; confidence: number }[] = [
-    { name: "ikigai.love", confidence: profile.ikigai.love.confidence },
-    { name: "ikigai.skill", confidence: profile.ikigai.skill.confidence },
-    { name: "ikigai.need", confidence: profile.ikigai.need.confidence },
-    { name: "ikigai.paid", confidence: profile.ikigai.paid.confidence },
-    { name: "personality16", confidence: profile.personality16.confidence },
-    { name: "bigFive.openness", confidence: profile.bigFive.openness.confidence },
-    { name: "bigFive.conscientiousness", confidence: profile.bigFive.conscientiousness.confidence },
-    { name: "bigFive.extraversion", confidence: profile.bigFive.extraversion.confidence },
-    { name: "bigFive.agreeableness", confidence: profile.bigFive.agreeableness.confidence },
-    { name: "bigFive.neuroticism", confidence: profile.bigFive.neuroticism.confidence },
-    { name: "enneagram", confidence: profile.enneagram.confidence },
-    { name: "viaStrengths", confidence: profile.viaStrengths.confidence },
-    { name: "schwartzValues", confidence: profile.schwartzValues.confidence },
-    { name: "hollandRIASEC", confidence: profile.hollandRIASEC.confidence },
-    { name: "lifeStory", confidence: profile.lifeStory.confidence },
-  ];
-  all.sort((a, b) => a.confidence - b.confidence);
-  return all.slice(0, 3).map((d) => d.name);
+export function getInterviewProgress(questionCount: number): number {
+  return Math.min(Math.round((questionCount / 15) * 100), 100);
 }
 
-export const CONFIDENCE_THRESHOLD = 0.6;
-export const INTERVIEW_DURATION_MS = 15 * 60 * 1000;
+const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = {
+  insufficient: 0,
+  emerging: 1,
+  supported: 2,
+  confirmed: 3,
+  disputed: 1,
+};
+
+export function getProfileDepth(profile: Profile): number {
+  const items = [
+    ...profile.coreDrivers,
+    ...profile.personalValues,
+    ...profile.demonstratedStrengths,
+  ];
+  if (items.length === 0) return 0;
+  const total = items.reduce((sum, i) => sum + CONFIDENCE_RANK[i.confidence], 0);
+  const max = items.length * 3;
+  return total / max;
+}

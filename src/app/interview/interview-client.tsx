@@ -2,9 +2,21 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { createEmptyProfile, Profile, getOverallConfidence } from "@/lib/interview/profile";
+import {
+  createEmptyProfile,
+  Profile,
+  getInterviewPhase,
+  getInterviewProgress,
+} from "@/lib/interview/profile";
 import { ConversationMessage, getOpeningQuestion } from "@/lib/interview/engine";
 import { useVoiceRecorder, RecorderState } from "@/lib/voice/use-voice-recorder";
+
+interface ChatMessage {
+  role: "assistant" | "user";
+  content: string;
+  isMirrorMoment?: boolean;
+  mirrorHandled?: boolean;
+}
 
 function TypingIndicator() {
   return (
@@ -16,17 +28,55 @@ function TypingIndicator() {
   );
 }
 
-function ProgressBar({ confidence }: { confidence: number }) {
-  const pct = Math.min(Math.round(confidence * 100), 100);
+function PhaseIndicator({
+  phase,
+  progress,
+}: {
+  phase: string;
+  progress: number;
+}) {
   return (
     <div className="flex items-center gap-3 text-xs text-muted">
-      <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+      <span className="whitespace-nowrap">{phase}</span>
+      <div className="w-16 h-1 rounded-full bg-border overflow-hidden">
         <div
           className="h-full rounded-full bg-accent transition-all duration-700 ease-out"
-          style={{ width: `${pct}%` }}
+          style={{ width: `${progress}%` }}
         />
       </div>
-      <span>{pct}%</span>
+    </div>
+  );
+}
+
+function MirrorButtons({
+  onConfirm,
+  onCorrect,
+  onReject,
+}: {
+  onConfirm: () => void;
+  onCorrect: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2 mt-3">
+      <button
+        onClick={onConfirm}
+        className="rounded-full border border-accent text-accent px-4 py-2 text-sm font-medium hover:bg-accent hover:text-white transition-colors"
+      >
+        That resonates
+      </button>
+      <button
+        onClick={onCorrect}
+        className="rounded-full border border-border text-foreground px-4 py-2 text-sm font-medium hover:bg-surface transition-colors"
+      >
+        Not quite...
+      </button>
+      <button
+        onClick={onReject}
+        className="rounded-full border border-border text-muted px-4 py-2 text-sm font-medium hover:bg-surface transition-colors"
+      >
+        That&apos;s not me
+      </button>
     </div>
   );
 }
@@ -126,7 +176,7 @@ function MicButton({
 }
 
 export default function InterviewClient() {
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [profile, setProfile] = useState<Profile>(createEmptyProfile);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +184,8 @@ export default function InterviewClient() {
   const startedAtRef = useRef(0);
   const [isComplete, setIsComplete] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [pendingMirrorIndex, setPendingMirrorIndex] = useState<number | null>(null);
+  const [showCorrectionInput, setShowCorrectionInput] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -163,10 +215,15 @@ export default function InterviewClient() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && recorder.state === "idle" && inputRef.current) {
+    if (
+      !isLoading &&
+      recorder.state === "idle" &&
+      pendingMirrorIndex === null &&
+      inputRef.current
+    ) {
       inputRef.current.focus();
     }
-  }, [isLoading, recorder.state]);
+  }, [isLoading, recorder.state, pendingMirrorIndex]);
 
   useEffect(() => {
     if (recorder.error) {
@@ -174,64 +231,134 @@ export default function InterviewClient() {
     }
   }, [recorder.error]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || isLoading) return;
+  const sendMessage = useCallback(
+    async (text: string, allMessages: ChatMessage[]) => {
+      setIsLoading(true);
 
-    const userMessage: ConversationMessage = { role: "user", content: text };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setInput("");
-    setVoiceError(null);
-    setIsLoading(true);
+      const apiMessages: ConversationMessage[] = allMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-    try {
-      const res = await fetch("/api/interview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: updatedMessages,
-          profile,
-          questionCount,
-          startedAt: startedAtRef.current,
-        }),
-      });
+      try {
+        const res = await fetch("/api/interview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: apiMessages,
+            profile,
+            questionCount,
+            startedAt: startedAtRef.current,
+          }),
+        });
 
-      if (!res.ok) throw new Error("API error");
+        if (!res.ok) throw new Error("API error");
 
-      const data = await res.json();
-      setProfile(data.profile);
-      setQuestionCount((c) => c + 1);
+        const data = await res.json();
+        setProfile(data.profile);
+        setQuestionCount((c) => c + 1);
 
-      if (data.shouldEnd) {
+        if (data.shouldEnd) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                "Thank you so much for sharing all of that with me. I have a really clear picture of who you are and what drives you. Let me put together your results — this is going to be good.",
+            },
+          ]);
+          setIsComplete(true);
+        } else {
+          const newMsg: ChatMessage = {
+            role: "assistant",
+            content: data.question,
+            isMirrorMoment: data.isMirrorMoment || false,
+          };
+          setMessages((prev) => {
+            const updated = [...prev, newMsg];
+            if (data.isMirrorMoment) {
+              setPendingMirrorIndex(updated.length - 1);
+            }
+            return updated;
+          });
+        }
+      } catch {
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
             content:
-              "Thank you so much for sharing all of that with me. I have a really clear picture of who you are and what drives you. Let me put together your results — this is going to be good.",
+              "I'm sorry, something went wrong on my end. Could you try sharing that again?",
           },
         ]);
-        setIsComplete(true);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.question },
-        ]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      setMessages((prev) => [
-        ...prev,
+    },
+    [profile, questionCount]
+  );
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
+
+    const userMessage: ChatMessage = { role: "user", content: text };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput("");
+    setVoiceError(null);
+
+    await sendMessage(text, updatedMessages);
+  }
+
+  function handleMirrorResponse(response: "confirmed" | "corrected" | "rejected", correction?: string) {
+    if (pendingMirrorIndex === null) return;
+
+    const mirrorMsg = messages[pendingMirrorIndex];
+
+    setProfile((prev) => ({
+      ...prev,
+      mirrorMoments: [
+        ...prev.mirrorMoments,
         {
-          role: "assistant",
-          content:
-            "I'm sorry, something went wrong on my end. Could you try sharing that again?",
+          questionNumber: questionCount,
+          reflection: mirrorMsg.content,
+          response,
+          correction,
         },
-      ]);
-    } finally {
-      setIsLoading(false);
+      ],
+    }));
+
+    setMessages((prev) =>
+      prev.map((m, i) =>
+        i === pendingMirrorIndex ? { ...m, mirrorHandled: true } : m
+      )
+    );
+
+    setPendingMirrorIndex(null);
+    setShowCorrectionInput(false);
+
+    let responseText: string;
+    if (response === "confirmed") {
+      responseText =
+        "Yes, that really resonates with me.";
+    } else if (response === "corrected") {
+      responseText = correction
+        ? `Not quite — ${correction}`
+        : "Not quite, but I'm not sure how to put it differently.";
+    } else {
+      responseText =
+        "No, that doesn't feel like me.";
     }
+
+    const userMessage: ChatMessage = { role: "user", content: responseText };
+    const updatedMessages = [...messages.map((m, i) =>
+      i === pendingMirrorIndex ? { ...m, mirrorHandled: true } : m
+    ), userMessage];
+    setMessages(updatedMessages);
+
+    sendMessage(responseText, updatedMessages);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -241,7 +368,12 @@ export default function InterviewClient() {
     }
   }
 
-  const isBusy = isLoading || recorder.state === "transcribing" || recorder.state === "requesting";
+  const isBusy =
+    isLoading ||
+    recorder.state === "transcribing" ||
+    recorder.state === "requesting";
+
+  const hasPendingMirror = pendingMirrorIndex !== null;
 
   return (
     <div className="flex flex-col h-dvh bg-background">
@@ -249,25 +381,70 @@ export default function InterviewClient() {
         <Link href="/" className="font-serif text-lg tracking-tight">
           MeetYourWhy
         </Link>
-        <ProgressBar confidence={getOverallConfidence(profile)} />
+        <PhaseIndicator
+          phase={getInterviewPhase(questionCount)}
+          progress={getInterviewProgress(questionCount)}
+        />
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-5 py-8 space-y-6">
           {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+            <div key={i}>
               <div
-                className={`max-w-[85%] rounded-2xl px-5 py-3 text-[15px] leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-foreground text-background rounded-br-sm"
-                    : "bg-surface border border-border rounded-bl-sm"
-                }`}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {msg.content}
+                <div
+                  className={`max-w-[85%] rounded-2xl px-5 py-3 text-[15px] leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-foreground text-background rounded-br-sm"
+                      : msg.isMirrorMoment
+                        ? "bg-accent/10 border border-accent/30 rounded-bl-sm"
+                        : "bg-surface border border-border rounded-bl-sm"
+                  }`}
+                >
+                  {msg.content}
+                </div>
               </div>
+              {msg.isMirrorMoment &&
+                !msg.mirrorHandled &&
+                pendingMirrorIndex === i && (
+                  <div className="flex justify-start mt-1">
+                    <div className="max-w-[85%]">
+                      {showCorrectionInput ? (
+                        <div className="flex flex-col gap-2 mt-2">
+                          <textarea
+                            autoFocus
+                            placeholder="What feels more accurate?"
+                            className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm leading-relaxed placeholder:text-muted/50 focus:outline-none focus:ring-1 focus:ring-accent/30 resize-none"
+                            rows={2}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                const val = (e.target as HTMLTextAreaElement).value.trim();
+                                handleMirrorResponse("corrected", val || undefined);
+                              }
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShowCorrectionInput(false)}
+                              className="text-xs text-muted hover:text-foreground"
+                            >
+                              Back
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <MirrorButtons
+                          onConfirm={() => handleMirrorResponse("confirmed")}
+                          onCorrect={() => setShowCorrectionInput(true)}
+                          onReject={() => handleMirrorResponse("rejected")}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
           ))}
           {isLoading && (
@@ -303,11 +480,13 @@ export default function InterviewClient() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  recorder.state === "recording"
-                    ? "Recording... tap the stop button when done"
-                    : recorder.state === "transcribing"
-                      ? "Transcribing your answer..."
-                      : "Share your thoughts... or tap the mic"
+                  hasPendingMirror
+                    ? "Use the buttons above, or type your thoughts..."
+                    : recorder.state === "recording"
+                      ? "Recording... tap the stop button when done"
+                      : recorder.state === "transcribing"
+                        ? "Transcribing your answer..."
+                        : "Share your thoughts... or tap the mic"
                 }
                 disabled={isBusy || recorder.state === "recording"}
                 rows={1}
