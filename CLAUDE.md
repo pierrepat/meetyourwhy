@@ -165,10 +165,10 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Primary share action: "Send this to someone who knows you. Ask them: is this me?" via native share to messaging apps
 - [x] Secondary: download Instagram Story card (1080×1920)
 - [x] User approval before anything becomes public
-- [ ] Minimal public share page (card + "Discover what makes you, you" CTA) — kept for referral attribution (requires Supabase)
-- [ ] Opaque, revocable share tokens (requires Supabase)
-- [ ] Referral attribution events (requires Supabase)
-- [ ] `share_sent_privately` event (native share started from private prompt, no content in event properties)
+- [x] Minimal public share page (card + "Discover what makes you, you" CTA) — Supabase + `/share/[token]` route
+- [x] Opaque, revocable share tokens (Supabase `shared_results` table with UUID tokens, RLS, `revoked_at` column)
+- [ ] Referral attribution events (referrer_token column exists, needs PostHog integration)
+- [ ] `share_sent_privately` event (needs PostHog integration)
 
 ### Stage 7: Saved Results, Analytics, Guardrails
 - [ ] Supabase integration for secure result persistence

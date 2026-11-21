@@ -553,8 +553,39 @@ function ShareScreen({
 }) {
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  const shareText = `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}.\n\nWant to find yours? meetyourwhy.com`;
+  useEffect(() => {
+    async function createShareToken() {
+      try {
+        const res = await fetch("/api/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            northStar,
+            hiddenThreadTheme,
+            archetypeName: archetype,
+          }),
+        });
+        if (res.ok) {
+          const { shareToken: token } = await res.json();
+          setShareToken(token);
+        }
+      } catch {
+        // Share link won't be available — private share still works
+      }
+    }
+    createShareToken();
+  }, [northStar, hiddenThreadTheme, archetype]);
+
+  const shareUrl = shareToken
+    ? `${window.location.origin}/share/${shareToken}`
+    : null;
+
+  const shareText = shareUrl
+    ? `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}.\n\nSee my full results: ${shareUrl}\n\nWant to find yours? meetyourwhy.com`
+    : `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}.\n\nWant to find yours? meetyourwhy.com`;
 
   async function handlePrivateShare() {
     if (navigator.share) {
@@ -572,6 +603,17 @@ function ShareScreen({
         // Clipboard API blocked — fall back to prompt
         window.prompt("Copy this text to share:", shareText);
       }
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      window.prompt("Copy your share link:", shareUrl);
     }
   }
 
@@ -645,6 +687,19 @@ function ShareScreen({
           {copied ? "Copied to clipboard!" : "Share with someone"}
         </button>
       </div>
+
+      {/* Share link */}
+      {shareUrl && (
+        <div className="text-center space-y-3">
+          <p className="text-xs text-muted">Or share a link to your results</p>
+          <button
+            onClick={handleCopyLink}
+            className="rounded-full border border-border text-foreground px-6 py-3 text-sm hover:border-accent/40 transition-colors"
+          >
+            {linkCopied ? "Link copied!" : "Copy share link"}
+          </button>
+        </div>
+      )}
 
       {/* Secondary: Instagram Story card */}
       <div className="text-center space-y-3">
