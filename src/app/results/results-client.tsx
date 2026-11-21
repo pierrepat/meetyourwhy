@@ -165,6 +165,7 @@ export default function ResultsClient() {
           <ShareScreen
             northStar={northStarText}
             archetype={archetypeName}
+            hiddenThreadTheme={report.hiddenThread.theme}
             onBack={() => goTo("north-star")}
           />
         )}
@@ -542,12 +543,57 @@ function ArchetypeScreen({
 function ShareScreen({
   northStar,
   archetype,
+  hiddenThreadTheme,
   onBack,
 }: {
   northStar: string;
   archetype: string;
+  hiddenThreadTheme: string;
   onBack: () => void;
 }) {
+  const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareText = `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}.\n\nWant to find yours? meetyourwhy.com`;
+
+  async function handlePrivateShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: shareText });
+      } catch {
+        // User cancelled — not an error
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Clipboard API blocked — fall back to prompt
+        window.prompt("Copy this text to share:", shareText);
+      }
+    }
+  }
+
+  async function handleDownloadCard() {
+    setGenerating(true);
+    try {
+      const { generateStoryCard, downloadBlob } = await import(
+        "@/lib/share/story-card"
+      );
+      const blob = await generateStoryCard(
+        northStar,
+        archetype,
+        hiddenThreadTheme
+      );
+      downloadBlob(blob, "meetyourwhy-discovery.png");
+    } catch (err) {
+      console.error("Card generation failed:", err);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div className="space-y-10">
       <div className="space-y-3 text-center">
@@ -559,6 +605,7 @@ function ShareScreen({
         </h2>
       </div>
 
+      {/* Summary card */}
       <div className="bg-surface rounded-xl p-6 md:p-8 space-y-6">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-widest text-muted font-medium">
@@ -569,19 +616,49 @@ function ShareScreen({
         <hr className="border-border/30" />
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-widest text-muted font-medium">
+            Hidden Thread
+          </p>
+          <p className="text-sm text-foreground/80 italic">
+            {hiddenThreadTheme}
+          </p>
+        </div>
+        <hr className="border-border/30" />
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-widest text-muted font-medium">
             Archetype
           </p>
           <p className="text-lg font-semibold text-foreground">{archetype}</p>
         </div>
       </div>
 
-      <div className="text-center space-y-4">
-        <p className="text-sm text-muted">
-          Send this to someone who knows you. Ask them: is this me?
+      {/* Primary: private share */}
+      <div className="text-center space-y-3">
+        <p className="text-sm text-foreground/80">
+          Send this to someone who knows you.
+          <br />
+          Ask them: <span className="italic">is this me?</span>
         </p>
-        <ShareButton northStar={northStar} archetype={archetype} />
+        <button
+          onClick={handlePrivateShare}
+          className="rounded-full bg-accent text-white px-8 py-3 font-medium hover:bg-accent-light transition-colors"
+        >
+          {copied ? "Copied to clipboard!" : "Share with someone"}
+        </button>
       </div>
 
+      {/* Secondary: Instagram Story card */}
+      <div className="text-center space-y-3">
+        <p className="text-xs text-muted">Or save as an image for your story</p>
+        <button
+          onClick={handleDownloadCard}
+          disabled={generating}
+          className="rounded-full border border-border text-foreground px-6 py-3 text-sm hover:border-accent/40 transition-colors disabled:opacity-50"
+        >
+          {generating ? "Creating image..." : "Download Instagram Story"}
+        </button>
+      </div>
+
+      {/* Navigation */}
       <div className="text-center space-y-3 pt-4">
         <button
           onClick={onBack}
@@ -599,40 +676,5 @@ function ShareScreen({
         </div>
       </div>
     </div>
-  );
-}
-
-function ShareButton({
-  northStar,
-  archetype,
-}: {
-  northStar: string;
-  archetype: string;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const shareText = `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}. Want to find yours? meetyourwhy.com`;
-
-  async function handleShare() {
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: shareText });
-      } catch {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }
-
-  return (
-    <button
-      onClick={handleShare}
-      className="rounded-full bg-accent text-white px-8 py-3 font-medium hover:bg-accent-light transition-colors"
-    >
-      {copied ? "Copied!" : "Share with someone"}
-    </button>
   );
 }

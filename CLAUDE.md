@@ -162,12 +162,12 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [x] Screen 4: Share step
 
 ### Stage 6: Minimal Sharing Loop (private-first)
-- [ ] Primary share action: "Send this to someone who knows you. Ask them: is this me?" via native share to messaging apps
-- [ ] Secondary: download Instagram Story card (1080×1920)
-- [ ] User approval before anything becomes public
-- [ ] Minimal public share page (card + "Discover what makes you, you" CTA) — kept for referral attribution
-- [ ] Opaque, revocable share tokens
-- [ ] Referral attribution events
+- [x] Primary share action: "Send this to someone who knows you. Ask them: is this me?" via native share to messaging apps
+- [x] Secondary: download Instagram Story card (1080×1920)
+- [x] User approval before anything becomes public
+- [ ] Minimal public share page (card + "Discover what makes you, you" CTA) — kept for referral attribution (requires Supabase)
+- [ ] Opaque, revocable share tokens (requires Supabase)
+- [ ] Referral attribution events (requires Supabase)
 - [ ] `share_sent_privately` event (native share started from private prompt, no content in event properties)
 
 ### Stage 7: Saved Results, Analytics, Guardrails
