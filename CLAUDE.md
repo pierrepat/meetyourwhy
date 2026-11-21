@@ -133,20 +133,20 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Data deletion capability
 - [ ] Test with scripted distress conversations
 
-### Stage 3: Interview Intelligence & Evidence Engine (needs rework)
-- [x] New profile schema (life stories, drivers, values, strengths, tensions — versioned)
+### Stage 3: Interview Intelligence & Evidence Engine ✅
+- [x] New profile schema (Ikigai circles, tendencies, core drive/fear, natural role)
 - [x] Evidence records pointing to exact user statements
 - [x] Hypothesis generation with alternative interpretations
 - [x] Mirror moments with explicit user feedback (confirm/correct/reject)
 - [x] Revised interview system prompt (narrative-based)
 - [x] Improved stopping logic (~15 min, 12-18 questions)
-- [ ] Interviewer principles (`docs/INTERVIEWER_PRINCIPLES.md`) integrated as source of truth
-- [ ] Ikigai four-circle tracking in hidden profile state (love, good_at, world_needs, paid_for, overlaps)
-- [ ] Personality tendency tracking (energy, information, decisions, structure) with lean/confidence/evidence
-- [ ] Core drive and core fear tracking with evidence
-- [ ] Coverage gaps tracking to guide question selection
-- [ ] System prompt rewritten to match interviewer-principles conversation arc and listening guidelines
-- [ ] Safety protocol in system prompt (under-18 handling, distress detection, session flagging)
+- [x] Interviewer principles (`docs/INTERVIEWER_PRINCIPLES.md`) integrated as source of truth
+- [x] Ikigai four-circle tracking in hidden profile state (love, good_at, world_needs, paid_for, overlaps)
+- [x] Personality tendency tracking (energy, information, decisions, structure) with lean/confidence/evidence
+- [x] Core drive and core fear tracking with evidence
+- [x] Coverage gaps tracking to guide question selection
+- [x] System prompt rewritten to match interviewer-principles conversation arc and listening guidelines
+- [x] Safety protocol in system prompt (under-18 handling, distress detection, session flagging)
 - [ ] Test transcripts and evaluation scripts
 
 ### Stage 4: Discovery Report (launch scope: 3 results)

@@ -1,44 +1,74 @@
-export type ConfidenceLevel =
-  | "insufficient"
-  | "emerging"
-  | "supported"
-  | "confirmed"
-  | "disputed";
+// --- Ikigai ---
 
-export interface Evidence {
+export interface IkigaiEntry {
   quote: string;
-  context: string;
+  story: string;
+  strength: number; // 1-3
   questionNumber: number;
 }
 
-export interface LifeStory {
-  summary: string;
-  emotions: string[];
-  evidence: Evidence;
-  relatedDrivers: string[];
+export interface IkigaiOverlap {
+  circles: string[];
+  evidence: string;
 }
 
-export interface Insight {
-  label: string;
-  description: string;
-  evidence: Evidence[];
-  confidence: ConfidenceLevel;
+export interface Ikigai {
+  love: IkigaiEntry[];
+  goodAt: IkigaiEntry[];
+  worldNeeds: IkigaiEntry[];
+  paidFor: IkigaiEntry[];
+  overlaps: IkigaiOverlap[];
 }
 
-export interface Tension {
-  label: string;
-  sideA: string;
-  sideB: string;
-  evidence: Evidence[];
+// --- Personality tendencies ---
+
+export type TendencyLean =
+  | "inward"
+  | "outward"
+  | "concrete"
+  | "patterns"
+  | "logic"
+  | "values"
+  | "planned"
+  | "flexible"
+  | "unclear";
+
+export interface Tendency {
+  lean: TendencyLean;
+  confidence: number; // 0-1
+  evidence: string[];
 }
 
-export interface HiddenThread {
-  theme: string;
-  storyIndices: number[];
-  hypothesis: string;
-  alternativeHypothesis: string;
-  confidence: ConfidenceLevel;
+export interface Tendencies {
+  energy: Tendency;
+  information: Tendency;
+  decisions: Tendency;
+  structure: Tendency;
 }
+
+// --- Core drive / fear ---
+
+export interface DriveOrFear {
+  candidate: string;
+  confidence: number; // 0-1
+  evidence: string[];
+}
+
+// --- Natural role ---
+
+export interface NaturalRole {
+  candidate: string;
+  evidence: string[];
+}
+
+// --- Tension ---
+
+export interface ProfileTension {
+  candidate: string;
+  evidence: string[];
+}
+
+// --- Mirror moments ---
 
 export interface MirrorMoment {
   questionNumber: number;
@@ -47,31 +77,53 @@ export interface MirrorMoment {
   correction?: string;
 }
 
+// --- Full profile ---
+
 export interface Profile {
-  lifeStories: LifeStory[];
-  coreDrivers: Insight[];
-  personalValues: Insight[];
-  demonstratedStrengths: Insight[];
-  internalTensions: Tension[];
-  hiddenThread: HiddenThread | null;
+  ikigai: Ikigai;
+  tendencies: Tendencies;
+  coreDrive: DriveOrFear | null;
+  coreFear: DriveOrFear | null;
+  naturalRole: NaturalRole | null;
+  tension: ProfileTension | null;
   mirrorMoments: MirrorMoment[];
+  coverageGaps: string[];
+  safetyFlag: boolean;
+}
+
+function emptyTendency(): Tendency {
+  return { lean: "unclear", confidence: 0, evidence: [] };
 }
 
 export function createEmptyProfile(): Profile {
   return {
-    lifeStories: [],
-    coreDrivers: [],
-    personalValues: [],
-    demonstratedStrengths: [],
-    internalTensions: [],
-    hiddenThread: null,
+    ikigai: {
+      love: [],
+      goodAt: [],
+      worldNeeds: [],
+      paidFor: [],
+      overlaps: [],
+    },
+    tendencies: {
+      energy: emptyTendency(),
+      information: emptyTendency(),
+      decisions: emptyTendency(),
+      structure: emptyTendency(),
+    },
+    coreDrive: null,
+    coreFear: null,
+    naturalRole: null,
+    tension: null,
     mirrorMoments: [],
+    coverageGaps: ["love", "goodAt", "worldNeeds", "paidFor"],
+    safetyFlag: false,
   };
 }
 
 export function getInterviewPhase(questionCount: number): string {
-  if (questionCount <= 4) return "Getting to know you";
-  if (questionCount <= 7) return "Finding patterns";
+  if (questionCount <= 1) return "Getting started";
+  if (questionCount <= 5) return "Stories of aliveness";
+  if (questionCount <= 9) return "Strengths & contribution";
   if (questionCount <= 12) return "Going deeper";
   return "Putting it together";
 }
@@ -80,22 +132,16 @@ export function getInterviewProgress(questionCount: number): number {
   return Math.min(Math.round((questionCount / 15) * 100), 100);
 }
 
-const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = {
-  insufficient: 0,
-  emerging: 1,
-  supported: 2,
-  confirmed: 3,
-  disputed: 1,
-};
+export function getCoverageScore(profile: Profile): number {
+  let filled = 0;
+  if (profile.ikigai.love.length > 0) filled++;
+  if (profile.ikigai.goodAt.length > 0) filled++;
+  if (profile.ikigai.worldNeeds.length > 0) filled++;
+  if (profile.ikigai.paidFor.length > 0) filled++;
 
-export function getProfileDepth(profile: Profile): number {
-  const items = [
-    ...profile.coreDrivers,
-    ...profile.personalValues,
-    ...profile.demonstratedStrengths,
-  ];
-  if (items.length === 0) return 0;
-  const total = items.reduce((sum, i) => sum + CONFIDENCE_RANK[i.confidence], 0);
-  const max = items.length * 3;
-  return total / max;
+  const tendencyCount = (
+    ["energy", "information", "decisions", "structure"] as const
+  ).filter((k) => profile.tendencies[k].confidence > 0.5).length;
+
+  return (filled + tendencyCount) / 8;
 }
