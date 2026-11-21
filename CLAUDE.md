@@ -123,15 +123,15 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Instagram in-app browser testing (iOS & Android): mic fallback, "Open in Safari/Chrome" prompt, typed fallback works
 - [ ] English only for tester round (no i18n required yet, but avoid hardcoded strings where possible)
 
-### Stage 2B: Safety & Privacy Baseline (required before external testing)
-- [ ] 18+ age confirmation before interview
-- [ ] Distressing-disclosure detection and response protocol
-- [ ] Curated crisis-resource config (with sources, last-verified dates)
-- [ ] Verified deletion of raw audio after transcription
-- [ ] Server-only transcript access, no transcripts in logs/analytics/errors
-- [ ] Plain-language consent and privacy page
-- [ ] Data deletion capability
-- [ ] Test with scripted distress conversations
+### Stage 2B: Safety & Privacy Baseline (required before external testing) ✅
+- [x] 18+ age confirmation before interview
+- [x] Distressing-disclosure detection and response protocol
+- [x] Curated crisis-resource config (with sources, last-verified dates)
+- [x] Verified deletion of raw audio after transcription
+- [x] Server-only transcript access, no transcripts in logs/analytics/errors
+- [x] Plain-language consent and privacy page
+- [x] Data deletion capability
+- [x] Test with scripted distress conversations
 
 ### Stage 3: Interview Intelligence & Evidence Engine ✅
 - [x] New profile schema (Ikigai circles, tendencies, core drive/fear, natural role)

@@ -59,8 +59,16 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="text-center py-8 text-xs text-muted">
-        Your stories stay private. Nothing is shared without your permission.
+      <footer className="text-center py-8 text-xs text-muted space-y-1">
+        <p>Your stories stay private. Nothing is shared without your permission.</p>
+        <p>
+          <Link
+            href="/privacy"
+            className="underline hover:text-foreground transition-colors"
+          >
+            Privacy & How It Works
+          </Link>
+        </p>
       </footer>
     </div>
   );

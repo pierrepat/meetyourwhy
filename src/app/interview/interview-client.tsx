@@ -8,6 +8,7 @@ import {
 } from "@/lib/interview/profile";
 import { ConversationMessage, getOpeningQuestion } from "@/lib/interview/engine";
 import { useVoiceRecorder } from "@/lib/voice/use-voice-recorder";
+import { detectDistress, CRISIS_RESOURCES } from "@/lib/safety/crisis-resources";
 
 interface ChatMessage {
   role: "assistant" | "user";
@@ -111,6 +112,8 @@ function formatTime(seconds: number): string {
 }
 
 export default function InterviewClient() {
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [showDistressNotice, setShowDistressNotice] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [profile, setProfile] = useState<Profile>(createEmptyProfile);
   const [input, setInput] = useState("");
@@ -249,6 +252,11 @@ export default function InterviewClient() {
     const text = input.trim();
     if (!text || isLoading) return;
 
+    if (detectDistress(text)) {
+      setShowDistressNotice(true);
+      return;
+    }
+
     const userMessage: ChatMessage = { role: "user", content: text };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
@@ -333,6 +341,111 @@ export default function InterviewClient() {
     .find((m) => m.role === "assistant");
 
   const hasUserSpoken = messages.some((m) => m.role === "user");
+
+  if (!ageConfirmed) {
+    return (
+      <div className="flex flex-col h-dvh bg-background items-center justify-center px-5">
+        <div className="max-w-md w-full space-y-8 text-center animate-fade-slide-up">
+          <Link
+            href="/"
+            className="font-serif text-2xl tracking-tight text-foreground"
+          >
+            MeetYourWhy
+          </Link>
+          <div className="space-y-3">
+            <h1 className="text-xl font-serif text-foreground">
+              Before we begin
+            </h1>
+            <p className="text-sm text-muted leading-relaxed">
+              This is a reflective conversation about your life — your
+              experiences, what drives you, and where you might be heading.
+              It is not therapy or counseling.
+            </p>
+            <p className="text-sm text-muted leading-relaxed">
+              You must be 18 or older to continue.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => setAgeConfirmed(true)}
+              className="w-full rounded-full bg-foreground text-background px-6 py-3.5 font-medium transition-opacity hover:opacity-90"
+            >
+              I&apos;m 18 or older — let&apos;s go
+            </button>
+            <Link
+              href="/"
+              className="block text-sm text-muted hover:text-foreground transition-colors"
+            >
+              I&apos;m under 18
+            </Link>
+          </div>
+          <p className="text-xs text-muted/60">
+            By continuing, you agree to our{" "}
+            <Link href="/privacy" className="underline hover:text-muted">
+              privacy policy
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showDistressNotice) {
+    return (
+      <div className="flex flex-col h-dvh bg-background items-center justify-center px-5">
+        <div className="max-w-md w-full space-y-8 animate-fade-slide-up">
+          <div className="space-y-4 text-center">
+            <p className="text-xl font-serif text-foreground leading-relaxed">
+              It sounds like you might be going through something really hard
+              right now.
+            </p>
+            <p className="text-sm text-muted leading-relaxed">
+              This conversation isn&apos;t the right place for that kind of
+              support, but there are people who can help — right now, for free.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {CRISIS_RESOURCES.map((resource) => (
+              <a
+                key={resource.name}
+                href={resource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors"
+              >
+                <p className="font-semibold text-foreground">{resource.name}</p>
+                <p className="text-sm text-accent font-medium">
+                  {resource.contact}
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  {resource.description}
+                </p>
+              </a>
+            ))}
+          </div>
+
+          <div className="space-y-3 text-center">
+            <button
+              onClick={() => setShowDistressNotice(false)}
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              I&apos;m okay — continue the conversation
+            </button>
+            <div>
+              <Link
+                href="/"
+                className="text-sm text-muted/60 hover:text-muted transition-colors"
+              >
+                End session
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-dvh bg-background">

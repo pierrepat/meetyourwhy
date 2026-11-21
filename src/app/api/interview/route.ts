@@ -72,7 +72,9 @@ export async function POST(req: NextRequest) {
       isMirrorMoment: parsed.isMirrorMoment || false,
     });
   } catch (error) {
-    console.error("Interview API error:", error);
+    // Never log transcript text in error output
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Interview API error:", message);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }
