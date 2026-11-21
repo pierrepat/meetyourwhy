@@ -12,7 +12,19 @@ The product must feel calm, emotionally intelligent, trustworthy, sophisticated,
 
 **Promise:** Understand yourself. Find your direction. Let the people who matter understand you better.
 
-The product develops in two phases:
+**The One Problem (launch focus):** People feel unseen, unsure what they're for, and alone with that. At launch we solve one part: helping one person feel genuinely understood about who they are and where they're going. Every launch decision serves that feeling. Sharing, growth and connection are secondary until testers confirm it.
+
+**First Audience:** Adults at a work crossroads — people whose work is being changed by AI, who feel stuck in a role that feels empty, or who are starting a second act. First testers come from paid Instagram ads to cold traffic, not friends.
+
+**Validation Gate (must pass before anything else counts):**
+1. Do people feel genuinely understood?
+2. Are insights accurate and grounded in their actual stories?
+
+Bar: most completing testers name a specific line that made them think "how did it know that?" and rate "I felt understood" highly.
+
+Secondary (learn, don't optimize yet): Can they correct inaccurate interpretations? Do they share without being asked? Do shared-with people click through and complete?
+
+The product develops in two phases (long-term vision only — launch scope is defined by the one-problem statement and the 2026-11-21 addendum):
 1. **Personal Discovery** (launch focus) — An adaptive AI conversation that discovers meaningful patterns in a person's stories, producing a North Star, Hidden Thread, and Archetype.
 2. **Human Connection** (post-launch) — Two people who've completed discovery can voluntarily connect profiles to explore shared values, different motivations, and meaningful conversation questions.
 
@@ -48,7 +60,11 @@ The product develops in two phases:
 - The AI never invents quotes, memories, or motivations
 
 ### Frameworks approach
-The original profile used 8 personality frameworks (Ikigai, MBTI-inspired, Big Five, Enneagram, VIA, Schwartz, RIASEC, life story). These are being replaced by the narrative dimensions above. Ikigai may be retained as an optional reflection lens. Formal psychometric frameworks are deferred — they require proper validated assessments that cannot be inferred from a short conversation.
+- **Ikigai's four circles** (love, good at, world needs, paid for) are the backbone of the North Star. The North Star comes from the strongest overlap.
+- **Personality tendencies** (energy, information, decisions, structure) and **core drive / core fear** are internal listening lenses. Tracked in hidden interview state with evidence quotes and confidence levels. They feed the Archetype and the Hidden Thread.
+- At launch, never display type codes, scores, or framework names to users. No trademarked names (Myers-Briggs, MBTI) anywhere user-facing.
+- Human Design stays out.
+- `docs/INTERVIEWER_PRINCIPLES.md` is the source of truth for interviewer behavior (required input to Stage 3). Its hidden-notes structure should be folded into the versioned profile and evidence schema.
 
 ## Launch MVP Output (3 results only)
 
@@ -104,6 +120,8 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Graceful microphone permission handling
 - [ ] No raw audio storage (process and discard)
 - [ ] Mobile browser testing (Safari, Chrome)
+- [ ] Instagram in-app browser testing (iOS & Android): mic fallback, "Open in Safari/Chrome" prompt, typed fallback works
+- [ ] English only for tester round (no i18n required yet, but avoid hardcoded strings where possible)
 
 ### Stage 2B: Safety & Privacy Baseline (required before external testing)
 - [ ] 18+ age confirmation before interview
@@ -115,13 +133,20 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Data deletion capability
 - [ ] Test with scripted distress conversations
 
-### Stage 3: Interview Intelligence & Evidence Engine ✅
+### Stage 3: Interview Intelligence & Evidence Engine (needs rework)
 - [x] New profile schema (life stories, drivers, values, strengths, tensions — versioned)
 - [x] Evidence records pointing to exact user statements
 - [x] Hypothesis generation with alternative interpretations
 - [x] Mirror moments with explicit user feedback (confirm/correct/reject)
 - [x] Revised interview system prompt (narrative-based)
 - [x] Improved stopping logic (~15 min, 12-18 questions)
+- [ ] Interviewer principles (`docs/INTERVIEWER_PRINCIPLES.md`) integrated as source of truth
+- [ ] Ikigai four-circle tracking in hidden profile state (love, good_at, world_needs, paid_for, overlaps)
+- [ ] Personality tendency tracking (energy, information, decisions, structure) with lean/confidence/evidence
+- [ ] Core drive and core fear tracking with evidence
+- [ ] Coverage gaps tracking to guide question selection
+- [ ] System prompt rewritten to match interviewer-principles conversation arc and listening guidelines
+- [ ] Safety protocol in system prompt (under-18 handling, distress detection, session flagging)
 - [ ] Test transcripts and evaluation scripts
 
 ### Stage 4: Discovery Report (launch scope: 3 results)
@@ -136,13 +161,14 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Screen 3: Archetype (edit/confirm)
 - [ ] Screen 4: Share step
 
-### Stage 6: Minimal Sharing Loop
-- [ ] One North Star card (1080×1920 Instagram Story format)
+### Stage 6: Minimal Sharing Loop (private-first)
+- [ ] Primary share action: "Send this to someone who knows you. Ask them: is this me?" via native share to messaging apps
+- [ ] Secondary: download Instagram Story card (1080×1920)
 - [ ] User approval before anything becomes public
-- [ ] Image download + native mobile share
-- [ ] Minimal public share page (card + "Discover what makes you, you" CTA)
+- [ ] Minimal public share page (card + "Discover what makes you, you" CTA) — kept for referral attribution
 - [ ] Opaque, revocable share tokens
 - [ ] Referral attribution events
+- [ ] `share_sent_privately` event (native share started from private prompt, no content in event properties)
 
 ### Stage 7: Saved Results, Analytics, Guardrails
 - [ ] Supabase integration for secure result persistence
@@ -150,9 +176,23 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Core analytics events (discovery + sharing funnels)
 - [ ] Cost tracking, rate limits, bot protection, budget cap
 
-### Stage 8: Tester Round (10-15 people)
+### Stage 7B: Ad Readiness (must complete before any ad goes live)
+- [ ] Instagram in-app browser support confirmed (mic fallback, "Open in Safari/Chrome", typed fallback)
+- [ ] UTM parameter capture at landing, attached to session (no personal data in URLs)
+- [ ] Funnel reporting by ad source and creative
+- [ ] Meta pixel: fire only `landing_view`, `discovery_start`, `interview_complete` — never send transcript/results/interpretations to Meta or any analytics provider
+- [ ] In-app feedback after reveal: "How understood?" (1-5), "Which line surprised you?" (free text), "What did it get wrong?" (free text), optional call opt-in with separate consent and email
+- [ ] Feedback stored separately from transcript, founder-only access
+- [ ] Daily AI budget cap, per-session limits, rate limiting, bot protection confirmed in production
+- [ ] Landing page matches ad promise, 18+ confirmation and privacy explanation shown before interview
+- [ ] Per-question drop-off visibility in funnel
+
+### Stage 8: Tester Round (via Instagram ads)
+- [ ] Testers recruited through paid Instagram ads to cold traffic (not friends)
+- [ ] English only
 - [ ] Run full experience with real testers
-- [ ] Collect feedback: Do they feel understood? Are insights accurate? Do they share voluntarily?
+- [ ] Results judged against validation gate: Do people feel genuinely understood? Are insights accurate and grounded in their stories?
+- [ ] Collect feedback via in-app mechanism (from Stage 7B)
 - [ ] Fix critical issues
 - [ ] Founder decides next direction
 
@@ -162,6 +202,7 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 The original Stages 3-7 from the initial build plan have been superseded by the revised roadmap above. See `docs/STRATEGY_UPDATE_2026-11-19.md` for the full strategic context. Original stages covered: Final Report Generation, Results Page & PDF, Email Gate/Database, Share Card/Analytics, and Launch.
 
 ## Post-Launch Backlog (requires approval + evidence from testing)
+- French and Spanish translations (moved from active stages — English only until after Stage 8)
 - Additional results screens (drivers, tensions, directions, next chapter)
 - PDF export
 - Additional share cards (Archetype, What Drives Me, Something to Know About Me, Hidden Thread)
@@ -193,3 +234,4 @@ The original Stages 3-7 from the initial build plan have been superseded by the 
 - The user (Pierre) is not a developer — explain any manual steps clearly.
 - Do not start any future stage without founder approval.
 - Preserve working code when making changes. No blind rewrites.
+- Never send transcript text, results, or interpretations to Meta or any analytics provider.
