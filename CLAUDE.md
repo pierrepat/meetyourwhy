@@ -115,13 +115,13 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Data deletion capability
 - [ ] Test with scripted distress conversations
 
-### Stage 3: Interview Intelligence & Evidence Engine
-- [ ] New profile schema (life stories, drivers, values, strengths, tensions — versioned)
-- [ ] Evidence records pointing to exact user statements
-- [ ] Hypothesis generation with alternative interpretations
-- [ ] Mirror moments with explicit user feedback (confirm/correct/reject)
-- [ ] Revised interview system prompt (narrative-based)
-- [ ] Improved stopping logic (~15 min, 12-18 questions)
+### Stage 3: Interview Intelligence & Evidence Engine ✅
+- [x] New profile schema (life stories, drivers, values, strengths, tensions — versioned)
+- [x] Evidence records pointing to exact user statements
+- [x] Hypothesis generation with alternative interpretations
+- [x] Mirror moments with explicit user feedback (confirm/correct/reject)
+- [x] Revised interview system prompt (narrative-based)
+- [x] Improved stopping logic (~15 min, 12-18 questions)
 - [ ] Test transcripts and evaluation scripts
 
 ### Stage 4: Discovery Report (launch scope: 3 results)
