@@ -9,6 +9,9 @@ import {
   HiddenThread,
   Archetype,
 } from "@/lib/report/schema";
+import { FeedbackForm } from "./feedback-form";
+import { trackEvent } from "@/lib/analytics/posthog";
+import { getStoredUtm } from "@/lib/analytics/utm";
 
 type LoadState =
   | { status: "loading" }
@@ -63,6 +66,7 @@ export default function ResultsClient() {
         setLoadState({ status: "ready", report: data.report });
         setNorthStarText(data.report.northStar.statement);
         setArchetypeName(data.report.archetype.name);
+        trackEvent("report_generated", getStoredUtm() || undefined);
       } catch (err) {
         setLoadState({
           status: "error",
@@ -588,6 +592,7 @@ function ShareScreen({
     : `I just discovered my North Star: "${northStar}" — and my archetype is ${archetype}.\n\nWant to find yours? meetyourwhy.com`;
 
   async function handlePrivateShare() {
+    trackEvent("share_sent_privately", getStoredUtm() || undefined);
     if (navigator.share) {
       try {
         await navigator.share({ text: shareText });
@@ -608,6 +613,7 @@ function ShareScreen({
 
   async function handleCopyLink() {
     if (!shareUrl) return;
+    trackEvent("share_link_copied", getStoredUtm() || undefined);
     try {
       await navigator.clipboard.writeText(shareUrl);
       setLinkCopied(true);
@@ -618,6 +624,7 @@ function ShareScreen({
   }
 
   async function handleDownloadCard() {
+    trackEvent("share_card_downloaded", getStoredUtm() || undefined);
     setGenerating(true);
     try {
       const { generateStoryCard, downloadBlob } = await import(
@@ -711,6 +718,14 @@ function ShareScreen({
         >
           {generating ? "Creating image..." : "Download Instagram Story"}
         </button>
+      </div>
+
+      {/* Feedback */}
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-widest text-muted font-medium text-center">
+          Help us improve
+        </p>
+        <FeedbackForm />
       </div>
 
       {/* Navigation */}

@@ -177,15 +177,15 @@ Calm, warm, premium. Lots of whitespace. Mobile first. Think a quiet journal, no
 - [ ] Cost tracking, rate limits, bot protection, budget cap
 
 ### Stage 7B: Ad Readiness (must complete before any ad goes live)
-- [ ] Instagram in-app browser support confirmed (mic fallback, "Open in Safari/Chrome", typed fallback)
-- [ ] UTM parameter capture at landing, attached to session (no personal data in URLs)
-- [ ] Funnel reporting by ad source and creative
-- [ ] Meta pixel: fire only `landing_view`, `discovery_start`, `interview_complete` — never send transcript/results/interpretations to Meta or any analytics provider
-- [ ] In-app feedback after reveal: "How understood?" (1-5), "Which line surprised you?" (free text), "What did it get wrong?" (free text), optional call opt-in with separate consent and email
-- [ ] Feedback stored separately from transcript, founder-only access
-- [ ] Daily AI budget cap, per-session limits, rate limiting, bot protection confirmed in production
-- [ ] Landing page matches ad promise, 18+ confirmation and privacy explanation shown before interview
-- [ ] Per-question drop-off visibility in funnel
+- [x] Instagram in-app browser support confirmed (mic fallback, "Open in Safari/Chrome", typed fallback)
+- [x] UTM parameter capture at landing, attached to session (no personal data in URLs)
+- [x] Funnel reporting by ad source and creative
+- [x] Meta pixel: fire only `landing_view`, `discovery_start`, `interview_complete` — never send transcript/results/interpretations to Meta or any analytics provider
+- [x] In-app feedback after reveal: "How understood?" (1-5), "Which line surprised you?" (free text), "What did it get wrong?" (free text), optional call opt-in with separate consent and email
+- [x] Feedback stored separately from transcript, founder-only access
+- [x] Daily AI budget cap, per-session limits, rate limiting, bot protection confirmed in production
+- [x] Landing page matches ad promise, 18+ confirmation and privacy explanation shown before interview
+- [x] Per-question drop-off visibility in funnel
 
 ### Stage 8: Tester Round (via Instagram ads)
 - [ ] Testers recruited through paid Instagram ads to cold traffic (not friends)

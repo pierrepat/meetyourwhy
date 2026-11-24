@@ -9,6 +9,10 @@ import {
 import { ConversationMessage, getOpeningQuestion } from "@/lib/interview/engine";
 import { useVoiceRecorder } from "@/lib/voice/use-voice-recorder";
 import { detectDistress, CRISIS_RESOURCES } from "@/lib/safety/crisis-resources";
+import { trackPixelEvent } from "@/lib/analytics/meta-pixel";
+import { trackEvent } from "@/lib/analytics/posthog";
+import { getStoredUtm } from "@/lib/analytics/utm";
+import { isInstagramBrowser } from "@/lib/analytics/instagram-detect";
 
 interface ChatMessage {
   role: "assistant" | "user";
@@ -113,6 +117,7 @@ function formatTime(seconds: number): string {
 
 export default function InterviewClient() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [isIGBrowser, setIsIGBrowser] = useState(false);
   const [showDistressNotice, setShowDistressNotice] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [profile, setProfile] = useState<Profile>(createEmptyProfile);
@@ -148,6 +153,10 @@ export default function InterviewClient() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading, scrollToBottom]);
+
+  useEffect(() => {
+    setIsIGBrowser(isInstagramBrowser());
+  }, []);
 
   useEffect(() => {
     startedAtRef.current = Date.now();
@@ -203,7 +212,17 @@ export default function InterviewClient() {
         setProfile(data.profile);
         setQuestionCount((c) => c + 1);
 
+        trackEvent("question_answered", {
+          question_number: questionCount,
+          input_method: recorder.state !== "idle" ? "voice" : "typed",
+        });
+
         if (data.shouldEnd) {
+          trackPixelEvent("interview_complete");
+          trackEvent("interview_complete", {
+            question_count: questionCount,
+            ...getStoredUtm(),
+          });
           sessionStorage.setItem(
             "meetyourwhy_profile",
             JSON.stringify(data.profile)
@@ -352,6 +371,20 @@ export default function InterviewClient() {
           >
             MeetYourWhy
           </Link>
+          {isIGBrowser && (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 leading-relaxed">
+              <p className="font-medium mb-1">For the best experience</p>
+              <p>
+                Voice input works best in Safari or Chrome. Tap the{" "}
+                <span className="font-medium">&#8943;</span> menu above and
+                choose{" "}
+                <span className="font-medium">&ldquo;Open in browser&rdquo;</span>.
+              </p>
+              <p className="mt-1 text-xs text-amber-700">
+                You can still continue here — typing works fine.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             <h1 className="text-xl font-serif text-foreground">
               Before we begin
@@ -367,7 +400,14 @@ export default function InterviewClient() {
           </div>
           <div className="space-y-3">
             <button
-              onClick={() => setAgeConfirmed(true)}
+              onClick={() => {
+                setAgeConfirmed(true);
+                trackPixelEvent("discovery_start");
+                trackEvent("discovery_start", {
+                  ...getStoredUtm(),
+                  is_instagram_browser: isInstagramBrowser(),
+                });
+              }}
               className="w-full rounded-full bg-foreground text-background px-6 py-3.5 font-medium transition-opacity hover:opacity-90"
             >
               I&apos;m 18 or older — let&apos;s go

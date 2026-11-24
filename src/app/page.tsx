@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { LandingTracking } from "./landing-tracking";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-full">
+      <LandingTracking />
       <header className="w-full px-6 py-5">
         <span className="font-serif text-lg tracking-tight">MeetYourWhy</span>
       </header>

@@ -7,11 +7,20 @@ import {
 } from "@/lib/interview/engine";
 import { Profile } from "@/lib/interview/profile";
 import { extractJson } from "@/lib/interview/parse";
+import { checkRateLimit, checkSessionLimit } from "@/lib/rate-limit";
 
 const anthropic = new Anthropic();
 
 export async function POST(req: NextRequest) {
   try {
+    const rateCheck = checkRateLimit(req);
+    if (!rateCheck.ok) {
+      return NextResponse.json(
+        { error: rateCheck.error },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const {
       messages,
@@ -24,6 +33,14 @@ export async function POST(req: NextRequest) {
       questionCount: number;
       startedAt: number;
     } = body;
+
+    const sessionCheck = checkSessionLimit(questionCount);
+    if (!sessionCheck.ok) {
+      return NextResponse.json(
+        { error: sessionCheck.error },
+        { status: 429 }
+      );
+    }
 
     const elapsedMs = Date.now() - startedAt;
     const systemPrompt = buildSystemPrompt(profile, questionCount, elapsedMs);

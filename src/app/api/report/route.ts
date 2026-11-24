@@ -2,11 +2,20 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { Profile } from "@/lib/interview/profile";
 import { buildReportPrompt, parseReportResponse } from "@/lib/report/generate";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const anthropic = new Anthropic();
 
 export async function POST(req: NextRequest) {
   try {
+    const rateCheck = checkRateLimit(req);
+    if (!rateCheck.ok) {
+      return NextResponse.json(
+        { error: rateCheck.error },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { profile }: { profile: Profile } = body;
 
